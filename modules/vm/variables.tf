@@ -21,3 +21,7 @@ variable "admin_username" {
 variable "vm_size" {
   type = string
 }
+
+variable "ssh_public_key" {
+  type = string
+}

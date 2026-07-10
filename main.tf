@@ -33,4 +33,5 @@ module "vm" {
   vm_name             = var.vm_name
   admin_username      = var.admin_username
   vm_size             = var.vm_size
+  ssh_public_key = var.ssh_public_key
 }
