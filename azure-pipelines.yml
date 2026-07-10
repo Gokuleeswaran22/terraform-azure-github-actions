@@ -1,0 +1,47 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  serviceConnection: 'Azure-ServiceConnection'
+
+steps:
+
+- task: TerraformInstaller@1
+  displayName: 'Install Terraform'
+  inputs:
+    terraformVersion: 'latest'
+
+- task: TerraformTaskV4@4
+  displayName: 'Terraform Init'
+  inputs:
+    provider: 'azurerm'
+    command: 'init'
+    backendServiceArm: '$(serviceConnection)'
+    backendAzureRmResourceGroupName: 'rg-tfstate'
+    backendAzureRmStorageAccountName: 'sttfstategokul001'
+    backendAzureRmContainerName: 'tfstate'
+    backendAzureRmKey: 'dev.terraform.tfstate'
+
+- task: TerraformTaskV4@4
+  displayName: 'Terraform Validate'
+  inputs:
+    provider: 'azurerm'
+    command: 'validate'
+
+- task: TerraformTaskV4@4
+  displayName: 'Terraform Plan'
+  inputs:
+    provider: 'azurerm'
+    command: 'plan'
+    environmentServiceNameAzureRM: '$(serviceConnection)'
+
+- task: TerraformTaskV4@4
+  displayName: 'Terraform Apply'
+  inputs:
+    provider: 'azurerm'
+    command: 'apply'
+    commandOptions: '-auto-approve'
+    environmentServiceNameAzureRM: '$(serviceConnection)'
