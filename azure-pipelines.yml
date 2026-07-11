@@ -32,3 +32,8 @@ steps:
       terraform validate
       terraform plan -out=tfplan
       terraform apply -auto-approve tfplan
+
+      az deployment sub create \
+        --name "terraform-pipeline-$(Build.BuildId)" \
+        --location eastus \
+        --template-file deployment-marker.json
