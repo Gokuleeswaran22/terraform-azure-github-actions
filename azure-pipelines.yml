@@ -12,36 +12,23 @@ steps:
 - task: TerraformInstaller@1
   displayName: 'Install Terraform'
   inputs:
-    terraformVersion: 'latest'
+    terraformVersion: '1.15.8'
 
-- task: TerraformTaskV4@4
-  displayName: 'Terraform Init'
+- task: AzureCLI@2
+  displayName: 'Terraform Deployment'
   inputs:
-    provider: 'azurerm'
-    command: 'init'
-    backendServiceArm: '$(serviceConnection)'
-    backendAzureRmResourceGroupName: 'rg-tfstate'
-    backendAzureRmStorageAccountName: 'sttfstategokul001'
-    backendAzureRmContainerName: 'tfstate'
-    backendAzureRmKey: 'dev.terraform.tfstate'
+    azureSubscription: '$(serviceConnection)'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    addSpnToEnvironment: true
+    inlineScript: |
+      export ARM_CLIENT_ID="$servicePrincipalId"
+      export ARM_TENANT_ID="$tenantId"
+      export ARM_SUBSCRIPTION_ID="96124cd3-9a56-47cc-a8de-97cf3a98f50b"
+      export ARM_OIDC_TOKEN="$idToken"
+      export ARM_USE_OIDC="true"
 
-- task: TerraformTaskV4@4
-  displayName: 'Terraform Validate'
-  inputs:
-    provider: 'azurerm'
-    command: 'validate'
-
-- task: TerraformTaskV4@4
-  displayName: 'Terraform Plan'
-  inputs:
-    provider: 'azurerm'
-    command: 'plan'
-    environmentServiceNameAzureRM: '$(serviceConnection)'
-
-- task: TerraformTaskV4@4
-  displayName: 'Terraform Apply'
-  inputs:
-    provider: 'azurerm'
-    command: 'apply'
-    commandOptions: '-auto-approve'
-    environmentServiceNameAzureRM: '$(serviceConnection)'
+      terraform init -reconfigure
+      terraform validate
+      terraform plan -out=tfplan
+      terraform apply -auto-approve tfplan
