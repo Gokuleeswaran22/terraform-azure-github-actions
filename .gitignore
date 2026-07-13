@@ -6,6 +6,8 @@
 
 # Variable files
 *.tfvars
+!environments/dev.tfvars
+!environments/prod.tfvars
 
 # Terraform plans
 *.tfplan
