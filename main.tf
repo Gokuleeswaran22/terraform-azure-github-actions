@@ -36,16 +36,3 @@ module "vm" {
   ssh_public_key      = var.ssh_public_key
 }
 
-
-module "vm2" {
-  source = "./modules/vm"
-
-  resource_group_name = module.resource_group.resource_group_name
-  location            = var.location
-  subnet_id           = module.network.subnet_id
-
-  vm_name        = "vm-dev-linux-02"
-  vm_size        = var.vm_size
-  admin_username = var.admin_username
-  ssh_public_key = var.ssh_public_key
-}
