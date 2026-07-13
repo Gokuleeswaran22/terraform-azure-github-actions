@@ -1,5 +1,5 @@
 location            = "East US"
-resource_group_name = "rg-dev-demo"
+resource_group_name = "rg-prod-demo"
 environment         = "prod"
 vnet_name           = "vnet-prod"
 subnet_name         = "subnet-prod"
