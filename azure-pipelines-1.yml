@@ -12,6 +12,7 @@ parameters:
   values:
   - dev
   - prod
+  - qa
 
 variables:
   serviceConnection: 'Azure-ServiceConnection'
