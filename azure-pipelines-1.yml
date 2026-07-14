@@ -8,7 +8,7 @@ parameters:
 - name: environment
   displayName: 'Select Environment'
   type: string
-  default: prod
+  default: dev
   values:
   - dev
   - prod
