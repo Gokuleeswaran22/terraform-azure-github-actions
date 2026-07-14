@@ -13,6 +13,11 @@ parameters:
   - dev
   - prod
   - qa
+  
+name: diskSize
+  displayName: Enter Disk Size in GB
+  type: number
+  default: 128
 
 variables:
   serviceConnection: 'Azure-ServiceConnection'
@@ -49,6 +54,7 @@ steps:
 
       terraform plan \
         -var-file="environments/${{ parameters.environment }}.tfvars" \
+        -var="data_disk_size_gb=${{ parameters.diskSize }}" \
         -out=tfplan
 
       terraform apply \
