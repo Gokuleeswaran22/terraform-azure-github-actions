@@ -1,56 +1,45 @@
-trigger:
-- main
-
-pool:
-  vmImage: 'ubuntu-latest'
+trigger: none
 
 parameters:
 - name: environment
-  displayName: 'Select Environment'
+  displayName: Select Environment
   type: string
-  default: dev
+  default: prod
   values:
   - dev
-  - prod
   - qa
-  
-name: diskSize
+  - prod
+
+- name: diskSize
   displayName: Enter Disk Size in GB
-  type: number
-  default: 128
+  type: string
+  default: '128'
+
+pool:
+  vmImage: ubuntu-latest
 
 variables:
   serviceConnection: 'Azure-ServiceConnection'
 
 steps:
-
 - task: TerraformInstaller@1
-  displayName: 'Install Terraform'
+  displayName: Install Terraform
   inputs:
     terraformVersion: '1.15.8'
-
 
 - task: AzureCLI@2
   displayName: 'Terraform Plan and Apply - ${{ parameters.environment }}'
   inputs:
     azureSubscription: '$(serviceConnection)'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    addSpnToEnvironment: true
+    scriptType: bash
+    scriptLocation: inlineScript
     inlineScript: |
-      export ARM_CLIENT_ID="$servicePrincipalId"
-      export ARM_TENANT_ID="$tenantId"
-      export ARM_SUBSCRIPTION_ID="96124cd3-9a56-47cc-a8de-97cf3a98f50b"
-      export ARM_OIDC_TOKEN="$idToken"
-      export ARM_USE_OIDC="true"
-
       echo "Deploying environment: ${{ parameters.environment }}"
+      echo "Disk size: ${{ parameters.diskSize }} GB"
 
       terraform init \
         -reconfigure \
         -backend-config="key=${{ parameters.environment }}.terraform.tfstate"
-
-      terraform validate
 
       terraform plan \
         -var-file="environments/${{ parameters.environment }}.tfvars" \
@@ -60,37 +49,3 @@ steps:
       terraform apply \
         -auto-approve \
         tfplan
-
-
-- task: AzureCLI@2
-  displayName: 'Terraform State - ${{ parameters.environment }}'
-  inputs:
-    azureSubscription: '$(serviceConnection)'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    addSpnToEnvironment: true
-    inlineScript: |
-      export ARM_CLIENT_ID="$servicePrincipalId"
-      export ARM_TENANT_ID="$tenantId"
-      export ARM_SUBSCRIPTION_ID="96124cd3-9a56-47cc-a8de-97cf3a98f50b"
-      export ARM_OIDC_TOKEN="$idToken"
-      export ARM_USE_OIDC="true"
-
-      terraform init \
-        -reconfigure \
-        -backend-config="key=${{ parameters.environment }}.terraform.tfstate"
-
-      terraform state list
-
-
-- task: AzureCLI@2
-  displayName: 'Verify Azure Resources - ${{ parameters.environment }}'
-  inputs:
-    azureSubscription: '$(serviceConnection)'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    inlineScript: |
-      az resource list \
-        --resource-group "rg-${{ parameters.environment }}-demo" \
-        --query "[].{Name:name, Type:type, Location:location}" \
-        --output table
