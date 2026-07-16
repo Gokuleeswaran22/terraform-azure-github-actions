@@ -1,22 +1,16 @@
-# Terraform
-.terraform/
+# Terraform state
 *.tfstate
 *.tfstate.*
-.terraform.lock.hcl
 
-# Variable files
+# Terraform plan
+tfplan
+
+# Terraform directory
+.terraform/
+
+# Ignore normal tfvars
 *.tfvars
-!environments/dev.tfvars
-!environments/prod.tfvars
+
+# Allow environment tfvars
 !environments/qa.tfvars
-# Terraform plans
-*.tfplan
-
-# Logs
-crash.log
-
-# VS Code
-.vscode/
-
-# Linux
-*.swp
+!environments/prod.tfvars

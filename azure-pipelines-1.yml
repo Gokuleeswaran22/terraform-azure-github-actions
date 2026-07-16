@@ -1,51 +1,105 @@
-trigger: none
+trigger:
+  branches:
+    include:
+      - main
 
 parameters:
-- name: environment
-  displayName: Select Environment
-  type: string
-  default: prod
-  values:
-  - dev
-  - qa
-  - prod
-
 - name: diskSize
-  displayName: Enter Disk Size in GB
+  displayName: Disk Size (GB)
   type: string
   default: '128'
 
-pool:
-  vmImage: ubuntu-latest
+stages:
 
-variables:
-  serviceConnection: 'Azure-ServiceConnection'
+#=========================
+# DEV
+#=========================
 
-steps:
-- task: TerraformInstaller@1
-  displayName: Install Terraform
-  inputs:
-    terraformVersion: '1.15.8'
+- stage: DEV
 
-- task: AzureCLI@2
-  displayName: 'Terraform Plan and Apply - ${{ parameters.environment }}'
-  inputs:
-    azureSubscription: '$(serviceConnection)'
-    scriptType: bash
-    scriptLocation: inlineScript
-    inlineScript: |
-      echo "Deploying environment: ${{ parameters.environment }}"
-      echo "Disk size: ${{ parameters.diskSize }} GB"
+  displayName: Deploy DEV
 
-      terraform init \
-        -reconfigure \
-        -backend-config="key=${{ parameters.environment }}.terraform.tfstate"
+  jobs:
 
-      terraform plan \
-        -var-file="environments/${{ parameters.environment }}.tfvars" \
-        -var="data_disk_size_gb=${{ parameters.diskSize }}" \
-        -out=tfplan
+  - template: templates/terraform-deploy.yml
 
-      terraform apply \
-        -auto-approve \
-        tfplan
+    parameters:
+      environment: dev
+      diskSize: ${{ parameters.diskSize }}
+
+#=========================
+# QA
+#=========================
+
+- stage: QA
+
+  displayName: Deploy QA
+
+  dependsOn: DEV
+
+  condition: succeeded()
+
+  jobs:
+
+  - template: templates/terraform-deploy.yml
+
+    parameters:
+      environment: qa
+      diskSize: ${{ parameters.diskSize }}
+
+#=========================
+# PROD
+#=========================
+
+- stage: PROD
+
+  displayName: Deploy PROD
+
+  dependsOn: QA
+
+  condition: succeeded()
+
+  jobs:
+
+  - deployment: Deploy_PROD
+
+    displayName: Deploy Production
+
+    environment: PROD
+
+    strategy:
+
+      runOnce:
+
+        deploy:
+
+          steps:
+
+          - checkout: self
+
+          - task: TerraformInstaller@1
+            inputs:
+              terraformVersion: '1.15.8'
+
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: Azure-ServiceConnection
+              scriptType: bash
+              scriptLocation: inlineScript
+
+              inlineScript: |
+
+                terraform init \
+                  -reconfigure \
+                  -backend-config="key=prod.terraform.tfstate"
+
+                terraform validate
+
+                terraform plan \
+                  -var-file="environments/prod.tfvars" \
+                  -var="data_disk_size_gb=${{ parameters.diskSize }}" \
+                  -out=tfplan
+
+                terraform apply \
+                  -auto-approve \
+                  tfplan

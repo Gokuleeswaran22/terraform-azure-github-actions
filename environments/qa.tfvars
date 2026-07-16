@@ -1,11 +1,15 @@
 location            = "East US"
 resource_group_name = "rg-qa-demo"
-environment         = "QA"
-vnet_name           = "vnet-qa"
-subnet_name         = "subnet-qa"
-nsg_name            = "nsg-qa"
-vm_name             = "vm-qa-linux"
+environment         = "qa"
 
+vnet_name   = "vnet-qa"
+subnet_name = "subnet-qa"
+nsg_name    = "nsg-qa"
+
+vm_name       = "vm-qa-linux"
 admin_username = "azureuser"
 vm_size        = "Standard_D2as_v7"
+
+data_disk_size_gb = 64
+
 ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDh/fJYd7bUw73oAevGqB33jpo1D4uE8AITB1hWwfo3vFfcHgpCo8geIXLNIQC9S3xlzHTFrN+mfBPC9XGJ+nzir+KBTr3E2vQFe3d4/VRViVYgHP9k3Of3+WimYdTUgg/a4bQWzpYN2heapP1Sq1ivRMLUxHhkO5ab8dg0DjvydeD2srThUhCIQuYi+RhTYQa5SBcK3Bzy0LzRvSjMI5skTi+GnaIvsp7f0iWXBNY4/ct1ANV65kSODpwTJrp+RG/C+73qLg09HlLoYkWX+1rrxU97aoQww1t9YHXI1Xws+FhPQcfZ2owCcUVP4d1I5NmB2114vpVnvSHL/ByJk43dr3lMDZ72/Rtbz0UQO/wkUDcwjZwr8xClGN0gR2nBUInB64dG9r9W35RNAa7qeFe9qFRDfgBEoiPVO6PLn1bjWH7unrYlsr7cx5uiIz0W0HWBY/bZDjR86puOHHUSYFvrhMpRWN3sPuCAitPh1qau95+kmOlVm5I609grz6uS4gTfYY8T1YdX2rtbw48GOe8QYuJinuYAzWUKCkr4JXdmTE9hxwpEymdu+RclzUvPuaEX+cSzQFa2EVTezX0fQSPGYdVjdyyMgVkML8IpyPgTgQqO6LOcWKG/5psQo4k7nLVLPbrfqCoCcVLeGVYLqKSnz8CFXlLIlKwQEubuHvoXIQ== terraform-vm"
