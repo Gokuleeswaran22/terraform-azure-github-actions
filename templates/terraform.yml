@@ -1,0 +1,24 @@
+parameters:
+- name: environment
+  type: string
+
+- name: action
+  type: string
+
+- name: diskSize
+  type: string
+
+jobs:
+
+- job: ${{ parameters.environment }}_${{ parameters.action }}
+
+  displayName: "${{ upper(parameters.action) }} ${{ upper(parameters.environment) }}"
+
+  steps:
+
+  - template: terraform-steps.yml
+
+    parameters:
+      environment: ${{ parameters.environment }}
+      action: ${{ parameters.action }}
+      diskSize: ${{ parameters.diskSize }}

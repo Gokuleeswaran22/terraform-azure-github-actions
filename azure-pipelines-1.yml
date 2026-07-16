@@ -11,45 +11,60 @@ parameters:
 
 stages:
 
-#=========================
-# DEV
-#=========================
+#=================================================
+# DEV DEPLOY
+#=================================================
 
 - stage: DEV
-
   displayName: Deploy DEV
 
   jobs:
 
-  - template: templates/terraform-deploy.yml
-
+  - template: templates/terraform.yml
     parameters:
       environment: dev
+      action: apply
       diskSize: ${{ parameters.diskSize }}
 
-#=========================
-# QA
-#=========================
+#=================================================
+# DESTROY DEV
+#=================================================
 
-- stage: QA
-
-  displayName: Deploy QA
+- stage: DESTROY_DEV
+  displayName: Destroy DEV
 
   dependsOn: DEV
-
   condition: succeeded()
 
   jobs:
 
-  - template: templates/terraform-deploy.yml
-
+  - template: templates/terraform.yml
     parameters:
-      environment: qa
+      environment: dev
+      action: destroy
       diskSize: ${{ parameters.diskSize }}
 
-#=========================
-# PROD
-#=========================
+#=================================================
+# QA DEPLOY
+#=================================================
+
+- stage: QA
+  displayName: Deploy QA
+
+  dependsOn: DESTROY_DEV
+  condition: succeeded()
+
+  jobs:
+
+  - template: templates/terraform.yml
+    parameters:
+      environment: qa
+      action: apply
+      diskSize: ${{ parameters.diskSize }}
+
+#=================================================
+# PROD DEPLOY
+#=================================================
 
 - stage: PROD
 
@@ -61,9 +76,9 @@ stages:
 
   jobs:
 
-  - deployment: Deploy_PROD
+  - deployment: PROD
 
-    displayName: Deploy Production
+    displayName: Deploy PROD
 
     environment: PROD
 
@@ -75,31 +90,9 @@ stages:
 
           steps:
 
-          - checkout: self
+          - template: templates/terraform-steps.yml
 
-          - task: TerraformInstaller@1
-            inputs:
-              terraformVersion: '1.15.8'
-
-          - task: AzureCLI@2
-            inputs:
-              azureSubscription: Azure-ServiceConnection
-              scriptType: bash
-              scriptLocation: inlineScript
-
-              inlineScript: |
-
-                terraform init \
-                  -reconfigure \
-                  -backend-config="key=prod.terraform.tfstate"
-
-                terraform validate
-
-                terraform plan \
-                  -var-file="environments/prod.tfvars" \
-                  -var="data_disk_size_gb=${{ parameters.diskSize }}" \
-                  -out=tfplan
-
-                terraform apply \
-                  -auto-approve \
-                  tfplan
+            parameters:
+              environment: prod
+              action: apply
+              diskSize: ${{ parameters.diskSize }}

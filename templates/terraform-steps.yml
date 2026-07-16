@@ -1,0 +1,54 @@
+parameters:
+- name: environment
+  type: string
+
+- name: action
+  type: string
+
+- name: diskSize
+  type: string
+
+steps:
+
+- checkout: self
+
+- task: TerraformInstaller@1
+  displayName: Install Terraform
+  inputs:
+    terraformVersion: '1.15.8'
+
+- task: AzureCLI@2
+  displayName: Terraform ${{ parameters.action }}
+
+  inputs:
+    azureSubscription: Azure-ServiceConnection
+    scriptType: bash
+    scriptLocation: inlineScript
+
+    inlineScript: |
+
+      terraform init \
+        -reconfigure \
+        -backend-config="key=${{ parameters.environment }}.terraform.tfstate"
+
+      terraform validate
+
+      if [ "${{ parameters.action }}" = "apply" ]; then
+
+        terraform plan \
+          -var-file="environments/${{ parameters.environment }}.tfvars" \
+          -var="data_disk_size_gb=${{ parameters.diskSize }}" \
+          -out=tfplan
+
+        terraform apply \
+          -auto-approve \
+          tfplan
+
+      else
+
+        terraform destroy \
+          -var-file="environments/${{ parameters.environment }}.tfvars" \
+          -var="data_disk_size_gb=${{ parameters.diskSize }}" \
+          -auto-approve
+
+      fi
