@@ -2,9 +2,6 @@ parameters:
 - name: environment
   type: string
 
-- name: action
-  type: string
-
 - name: diskSize
   type: string
 
@@ -18,8 +15,7 @@ steps:
     terraformVersion: '1.15.8'
 
 - task: AzureCLI@2
-  displayName: Terraform ${{ parameters.action }}
-
+  displayName: Terraform Apply
   inputs:
     azureSubscription: Azure-ServiceConnection
     scriptType: bash
@@ -33,22 +29,11 @@ steps:
 
       terraform validate
 
-      if [ "${{ parameters.action }}" = "apply" ]; then
+      terraform plan \
+        -var-file="environments/${{ parameters.environment }}.tfvars" \
+        -var="data_disk_size_gb=${{ parameters.diskSize }}" \
+        -out=tfplan
 
-        terraform plan \
-          -var-file="environments/${{ parameters.environment }}.tfvars" \
-          -var="data_disk_size_gb=${{ parameters.diskSize }}" \
-          -out=tfplan
-
-        terraform apply \
-          -auto-approve \
-          tfplan
-
-      else
-
-        terraform destroy \
-          -var-file="environments/${{ parameters.environment }}.tfvars" \
-          -var="data_disk_size_gb=${{ parameters.diskSize }}" \
-          -auto-approve
-
-      fi
+      terraform apply \
+        -auto-approve \
+        tfplan

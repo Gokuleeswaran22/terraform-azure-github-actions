@@ -11,89 +11,94 @@ parameters:
 
 stages:
 
-#=================================================
-# DEV DEPLOY
-#=================================================
+#--------------------------------------
+# DEV
+#--------------------------------------
 
 - stage: DEV
   displayName: Deploy DEV
 
   jobs:
+  - job: DeployDEV
+    steps:
+    - template: templates/terraform-steps.yml
+      parameters:
+        environment: dev
+        diskSize: ${{ parameters.diskSize }}
 
-  - template: templates/terraform.yml
-    parameters:
-      environment: dev
-      action: apply
-      diskSize: ${{ parameters.diskSize }}
+#--------------------------------------
+# DELETE DEV VM
+#--------------------------------------
 
-#=================================================
-# DESTROY DEV
-#=================================================
-
-- task: AzureCLI@2
+- stage: DELETE_DEV_VM
   displayName: Delete DEV VM
 
-  inputs:
-    azureSubscription: Azure-ServiceConnection
-    scriptType: bash
-    scriptLocation: inlineScript
-
-    inlineScript: |
-
-      az vm delete \
-        --resource-group rg-dev-demo \
-        --name vm-dev-linux \
-        --yes
-
-#=================================================
-# QA DEPLOY
-#=================================================
-
-- stage: QA
-  displayName: Deploy QA
-
-  dependsOn: DESTROY_DEV
+  dependsOn: DEV
   condition: succeeded()
 
   jobs:
 
-  - template: templates/terraform.yml
-    parameters:
-      environment: qa
-      action: apply
-      diskSize: ${{ parameters.diskSize }}
+  - job: DeleteVM
+    displayName: Delete DEV VM
 
-#=================================================
-# PROD DEPLOY
-#=================================================
+    steps:
+
+    - task: AzureCLI@2
+      displayName: Delete DEV VM
+      inputs:
+        azureSubscription: Azure-ServiceConnection
+        scriptType: bash
+        scriptLocation: inlineScript
+
+        inlineScript: |
+
+          az vm delete \
+            --resource-group rg-dev-demo \
+            --name vm-dev-linux \
+            --yes
+
+#--------------------------------------
+# QA
+#--------------------------------------
+
+- stage: QA
+  displayName: Deploy QA
+
+  dependsOn: DELETE_DEV_VM
+  condition: succeeded()
+
+  jobs:
+  - job: DeployQA
+    steps:
+    - template: templates/terraform-steps.yml
+      parameters:
+        environment: qa
+        diskSize: ${{ parameters.diskSize }}
+
+#--------------------------------------
+# PROD
+#--------------------------------------
 
 - stage: PROD
-
   displayName: Deploy PROD
 
   dependsOn: QA
-
   condition: succeeded()
 
   jobs:
 
   - deployment: PROD
-
     displayName: Deploy PROD
 
     environment: PROD
 
     strategy:
-
       runOnce:
-
         deploy:
 
           steps:
 
           - template: templates/terraform-steps.yml
-
             parameters:
               environment: prod
-              action: apply
               diskSize: ${{ parameters.diskSize }}
