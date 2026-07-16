@@ -30,19 +30,20 @@ stages:
 # DESTROY DEV
 #=================================================
 
-- stage: DESTROY_DEV
-  displayName: Destroy DEV
+- task: AzureCLI@2
+  displayName: Delete DEV VM
 
-  dependsOn: DEV
-  condition: succeeded()
+  inputs:
+    azureSubscription: Azure-ServiceConnection
+    scriptType: bash
+    scriptLocation: inlineScript
 
-  jobs:
+    inlineScript: |
 
-  - template: templates/terraform.yml
-    parameters:
-      environment: dev
-      action: destroy
-      diskSize: ${{ parameters.diskSize }}
+      az vm delete \
+        --resource-group rg-dev-demo \
+        --name vm-dev-linux \
+        --yes
 
 #=================================================
 # QA DEPLOY
