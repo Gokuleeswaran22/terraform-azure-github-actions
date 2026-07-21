@@ -9,6 +9,13 @@ on:
       diskSize:
         required: true
         type: string
+    secrets:
+      AZURE_CLIENT_ID:
+        required: true
+      AZURE_TENANT_ID:
+        required: true
+      AZURE_SUBSCRIPTION_ID:
+        required: true
 
 permissions:
   id-token: write
@@ -23,6 +30,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check if secrets are available
+        run: |
+          echo "Checking secrets..."
+
+          if [ -z "${{ secrets.AZURE_CLIENT_ID }}" ]; then
+            echo "❌ AZURE_CLIENT_ID is EMPTY"
+          else
+            echo "✅ AZURE_CLIENT_ID is available"
+          fi
+
+          if [ -z "${{ secrets.AZURE_TENANT_ID }}" ]; then
+            echo "❌ AZURE_TENANT_ID is EMPTY"
+          else
+            echo "✅ AZURE_TENANT_ID is available"
+          fi
+
+          if [ -z "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ]; then
+            echo "❌ AZURE_SUBSCRIPTION_ID is EMPTY"
+          else
+            echo "✅ AZURE_SUBSCRIPTION_ID is available"
+          fi
+
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -34,7 +63,8 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Set environment name to lowercase
-        run: echo "ENV_LOWER=${{ inputs.environment }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_ENV
+        run: |
+          echo "ENV_LOWER=$(echo '${{ inputs.environment }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Terraform Init
         run: |
