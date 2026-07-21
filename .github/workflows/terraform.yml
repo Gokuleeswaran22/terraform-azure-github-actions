@@ -1,0 +1,53 @@
+name: Terraform Azure Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      diskSize:
+        description: "Data Disk Size (GB)"
+        required: true
+        default: "128"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  dev:
+    name: Deploy DEV
+    runs-on: ubuntu-latest
+
+    environment: DEV
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -reconfigure \
+            -backend-config="key=dev.terraform.tfstate"
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: |
+          terraform plan \
+            -var-file="environments/dev.tfvars" \
+            -var="data_disk_size_gb=${{ github.event.inputs.diskSize }}" \
+            -out=tfplan
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
