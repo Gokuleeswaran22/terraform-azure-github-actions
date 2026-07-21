@@ -1,17 +1,11 @@
 name: Azure Infrastructure Deployment
 
 on:
-
   workflow_dispatch:
-
     inputs:
-
       diskSize:
-
         description: Disk Size (GB)
-
         required: true
-
         default: "128"
 
 permissions:
@@ -20,24 +14,24 @@ permissions:
 
 jobs:
 
-#-----------------------------------
-# DEV
-#-----------------------------------
+  #-----------------------------------
+  # DEV
+  #-----------------------------------
 
   dev:
-
     uses: ./.github/workflows/terraform.yml
 
     with:
-      environment: dev
+      environment: DEV
       diskSize: ${{ github.event.inputs.diskSize }}
 
-#-----------------------------------
-# DELETE VM
-#-----------------------------------
+    secrets: inherit
+
+  #-----------------------------------
+  # DELETE DEV VM
+  #-----------------------------------
 
   delete-dev:
-
     needs: dev
 
     runs-on: ubuntu-latest
@@ -45,52 +39,46 @@ jobs:
     environment: DEV
 
     steps:
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    - uses: azure/login@v2
+      - name: Delete DEV VM
+        run: |
+          az vm delete \
+            --resource-group rg-dev-demo \
+            --name vm-dev-linux \
+            --yes
 
-      with:
-
-        client-id: ${{ secrets.AZURE_CLIENT_ID }}
-
-        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-
-        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-    - run: |
-
-        az vm delete \
-          --resource-group rg-dev-demo \
-          --name vm-dev-linux \
-          --yes
-
-#-----------------------------------
-# QA
-#-----------------------------------
+  #-----------------------------------
+  # QA
+  #-----------------------------------
 
   qa:
-
     needs: delete-dev
 
     uses: ./.github/workflows/terraform.yml
 
     with:
-
-      environment: qa
-
+      environment: QA
       diskSize: ${{ github.event.inputs.diskSize }}
 
-#-----------------------------------
-# PROD
-#-----------------------------------
+    secrets: inherit
+
+  #-----------------------------------
+  # PROD
+  #-----------------------------------
 
   prod:
-
     needs: qa
 
     uses: ./.github/workflows/terraform.yml
 
     with:
-
-      environment: prod
-
+      environment: PROD
       diskSize: ${{ github.event.inputs.diskSize }}
+
+    secrets: inherit

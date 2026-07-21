@@ -6,7 +6,6 @@ on:
       environment:
         required: true
         type: string
-
       diskSize:
         required: true
         type: string
@@ -16,47 +15,42 @@ permissions:
   contents: read
 
 jobs:
-
   deploy:
-
     runs-on: ubuntu-latest
 
     environment: ${{ inputs.environment }}
 
     steps:
+      - uses: actions/checkout@v4
 
-    - uses: actions/checkout@v4
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    - name: Azure Login
-      uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZURE_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
-    - uses: hashicorp/setup-terraform@v3
+      - name: Set environment name to lowercase
+        run: echo "ENV_LOWER=${{ inputs.environment }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_ENV
 
-    - name: Terraform Init
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -reconfigure \
+            -backend-config="key=${ENV_LOWER}.terraform.tfstate"
 
-      run: |
+      - name: Terraform Validate
+        run: terraform validate
 
-        terraform init \
-          -reconfigure \
-          -backend-config="key=${{ inputs.environment }}.terraform.tfstate"
+      - name: Terraform Plan
+        run: |
+          terraform plan \
+            -var-file="environments/${ENV_LOWER}.tfvars" \
+            -var="data_disk_size_gb=${{ inputs.diskSize }}" \
+            -out=tfplan
 
-    - name: Terraform Validate
-
-      run: terraform validate
-
-    - name: Terraform Plan
-
-      run: |
-
-        terraform plan \
-          -var-file="environments/${{ inputs.environment }}.tfvars" \
-          -var="data_disk_size_gb=${{ inputs.diskSize }}" \
-          -out=tfplan
-
-    - name: Terraform Apply
-
-      run: terraform apply -auto-approve tfplan
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
