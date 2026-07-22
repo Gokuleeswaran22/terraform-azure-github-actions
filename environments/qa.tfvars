@@ -6,7 +6,12 @@ vnet_name   = "vnet-qa"
 subnet_name = "subnet-qa"
 nsg_name    = "nsg-qa"
 
-vm_name       = "vm-qa-linux"
+vms = {
+  "vm-qa-linux-01" = {
+    vm_size           = "Standard_B2s"
+    data_disk_size_gb = 64
+  }
+}
 admin_username = "azureuser"
 vm_size        = "Standard_D2as_v7"
 
